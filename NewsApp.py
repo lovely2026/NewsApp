@@ -1,37 +1,48 @@
 import requests
-import json
+from colorama import Fore, Style, init
+
+init(autoreset=True)  
+
 api_key = "65666a6225614240b961b9a667893363"
 url = "https://newsapi.org/v2/top-headlines"
-country=input("Enter the country code (e.g. 'in' for india):")
 allowed_categories = ['business', 'entertainment', 'general', 'health', 'science', 'sports', 'technology']
-category=input("Enter the category of news from allowed categories :")
-while True:
-    if category in allowed_categories:
-        break
-    else:
-        print("Invalid category. Please enter one of the following categories: ")
-        category=input("Enter the category of news from allowed categories :")
+
+print("allowed_categories =", allowed_categories)
+
+category = input("Enter the category of news from allowed categories :").strip().lower()
+
+while category not in allowed_categories:
+    print("Invalid category. Please enter one of the following categories: ")
+    category = input("Enter the category of news from allowed categories :").strip().lower()
+
 while True:
     try:
-        pgSize=int(input("Enter the no. of articles to retrieve :"))
-        if pgSize>0:
+        pgSize = int(input("Enter the no. of articles to retrieve :"))
+        if pgSize > 0:
             break
         else:
             print("Please enter a positive integer.")
     except ValueError:
         print("Invalid input. Please enter a positive integer.")
-dict = {"country": country,"apiKey": api_key,"pageSize": pgSize,"category":category}
-response = requests.get(url, params=dict)
+
+param = {"apiKey": api_key, "pageSize": pgSize, "category": category}
+response = requests.get(url, params=param)
+
 if response.status_code == 200:
     news = response.json()
-    articles = news["articles"]
+    articles = news.get("articles", [])
+    print("-"*100 )
+    
     if articles:
-        for index, article in enumerate(articles, start=1):
-            print(f"{index}. {article['title']}")
-            print(f"Source: {article['source']['name']}")
-            print(f"Description: {article['description']}")
-            print(f"URL: {article['url']}")      
+        for index, article in enumerate(articles, start=1):         
+            print(Fore.YELLOW + f"{index}. Title: {article.get('title', 'No Title')}")
+            print(Fore.CYAN + f"   Source: {article.get('source', {}).get('name', 'Unknown Source')}")
+            print(Style.BRIGHT + f"   Description: {article.get('description', 'No Description')}")
+            print(Fore.BLUE + f"   URL: {article.get('url', 'No URL')}")
+
+            print(Style.RESET_ALL + "-" * 100)
     else:
-        print("No articles found for the query(q).")
+        print(Fore.RED + "No articles found for the given category.")
 else:
-    print("Failed to retrieve news")
+    print(Fore.RED + f"Failed to retrieve news. Status code: {response.status_code}")
+    print("Message:", response.text)
